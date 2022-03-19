@@ -12,15 +12,15 @@
 #endif
 
 
-//progam data and save data pages(set by PC manager tool)
-constexpr uint16_t FX_VECTOR_KEY_VALUE  = 0x9518;        /* RETI instruction used a magic key */
+// progam data and save data pages(set by PC manager tool)
+constexpr uint16_t FX_VECTOR_KEY_VALUE  = 0x9518;        /* RETI instruction used as magic key */
 constexpr uint16_t FX_DATA_VECTOR_KEY_POINTER  = 0x0014; /* reserved interrupt vector 5  area */
 constexpr uint16_t FX_DATA_VECTOR_PAGE_POINTER = 0x0016;
 constexpr uint16_t FX_SAVE_VECTOR_KEY_POINTER  = 0x0018; /* reserved interrupt vector 6  area */
 constexpr uint16_t FX_SAVE_VECTOR_PAGE_POINTER = 0x001A;
 
-//Serial Flash Commands
-constexpr uint8_t SFC_JEDEC_ID  	    = 0x9F;
+// Serial Flash Commands
+constexpr uint8_t SFC_JEDEC_ID          = 0x9F;
 constexpr uint8_t SFC_READSTATUS1       = 0x05;
 constexpr uint8_t SFC_READSTATUS2       = 0x35;
 constexpr uint8_t SFC_READSTATUS3       = 0x15;
@@ -31,7 +31,7 @@ constexpr uint8_t SFC_ERASE             = 0x20;
 constexpr uint8_t SFC_RELEASE_POWERDOWN = 0xAB;
 constexpr uint8_t SFC_POWERDOWN         = 0xB9;
 
-//drawbitmap bit flags (used by modes below and internally)
+// drawbitmap bit flags (used by modes below and internally)
 constexpr uint8_t dbfWhiteBlack   = 0; // bitmap is used as mask
 constexpr uint8_t dbfInvert       = 1; // bitmap is exclusive or-ed with display
 constexpr uint8_t dbfBlack        = 2; // bitmap will be blackened
@@ -39,7 +39,7 @@ constexpr uint8_t dbfReverseBlack = 3; // reverses bitmap data
 constexpr uint8_t dbfMasked       = 4; // bitmap contains mask data
 constexpr uint8_t dbfExtraRow     = 7; // ignored (internal use)
 
-//drawBitmap modes with same behaviour as Arduboy library drawBitmap modes
+// drawBitmap modes with same behaviour as Arduboy library drawBitmap modes
 constexpr uint8_t dbmBlack   = _BV(dbfReverseBlack) |   // white pixels in bitmap will be drawn as black pixels on display
                                _BV(dbfBlack) |          // black pixels in bitmap will not change pixels on display
                                _BV(dbfWhiteBlack);      // (same as sprites drawErase)
@@ -51,7 +51,7 @@ constexpr uint8_t dbmWhite   = _BV(dbfWhiteBlack);      // white pixels in bitma
 constexpr uint8_t dbmInvert  = _BV(dbfInvert);          // when a pixel in bitmap has a different color than on display the
                                                         // pixel on display will be drawn as white. In all other cases the
                                                         // pixel will be drawn as black
-//additional drawBitmap modes 
+// additional drawBitmap modes 
 constexpr uint8_t dbmNormal     = 0;                    // White pixels in bitmap will be drawn as white pixels on display
 constexpr uint8_t dbmOverwrite  = 0;                    // Black pixels in bitmap will be drawn as black pixels on display
                                                         // (Same as sprites drawOverwrite)
@@ -60,7 +60,7 @@ constexpr uint8_t dbmReverse = _BV(dbfReverseBlack);    // White pixels in bitma
                                                         // Black pixels in bitmap will be drawn as white pixels on display
                                      
 constexpr uint8_t dbmMasked  = _BV(dbfMasked);          // The bitmap contains a mask that will determine which pixels are
-                                                        // drawn and which will remain 
+                                                        // drawn and which pixels remain unchanged on display
                                                         // (same as sprites drawPlusMask)
                                      
 // Note above modes may be combined like (dbmMasked | dbmReverse)
@@ -123,8 +123,14 @@ class FX
       SPDR = data;
     }
 
-    static uint8_t readByte(); //read a single byte from flash memory
+    static uint8_t readByte(); // read a single byte from flash memory
 
+    static void displayPrefetch(uint24_t address, uint8_t* target, uint16_t len, bool clear);
+
+    static void display(); // display screen buffer
+    
+    static void display(bool clear); // display screen buffer with clear
+    
     static void begin(); // Initializes flash memory. Use only when program does not require data and save areas in flash memory
 
     static void begin(uint16_t programDataPage); // Initializes flash memory. Use when program depends on data in flash memory
@@ -201,7 +207,7 @@ class FX
     
     static void readDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize, uint8_t* buffer, size_t length);
     
-    static uint16_t readIndexedUInt8(uint24_t address, uint8_t index);
+    static uint8_t readIndexedUInt8(uint24_t address, uint8_t index);
     
     static uint16_t readIndexedUInt16(uint24_t address, uint8_t index);
     

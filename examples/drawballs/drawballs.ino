@@ -1,12 +1,16 @@
 /* *****************************************************************************
- * FX draw balls test v1.15 by Mr.Blinky May 2019 May2021 licenced under CC0
+ * FX draw balls test v1.16 by Mr.Blinky May 2019 Feb 2022 licenced under CC0
  * *****************************************************************************
  * 
- * This test depend on the file fxdata.bin being uploaded to the external FX flash 
- * chip using the uploader-gui.py or flash-writer.py Python script in the
- * development area. When using the flash writer script. Use the following command:
+ * Before this example sketch is uploaded and run on the Arduboy FX, make sure 
+ * the fxdata this sketch has been build and uploaded to the Arduboy FX. 
  * 
- * python flash-writer.py -d fxdata.bin
+ * If the Arduboy FX Arduino plugin has been installed you can simply choose the 
+ * 'Build and upload Arduboy FX data' from the Arduino IDE Tools menu.
+ * 
+ * Alternatively the fxdata.txt script file can be build using the fxdata-build.py 
+ * Phyton script and the fxdata.bin file can be uploaded using the uploader-gui.py, 
+ * fxdata-upload.py or flash-writer.py Python script using the -d switch.
  * 
  * This demo draws a moving background tilemap with a bunch of bouncing ball sprites around
  * 
@@ -21,7 +25,7 @@
 
 #include <Arduboy2.h>
 #include <ArduboyFX.h>                // Required library for accessing the FX flash chip
-#include "fxdata.h"                   // this file contains all the references to FX data
+#include "fxdata/fxdata.h"            // this file contains all the references to FX data
                                       // Check out fxdata.txt to see how this is done.
 #define FRAME_RATE 60
 
@@ -68,8 +72,7 @@ uint8_t pos;
 void setup() {
   arduboy.begin();
   arduboy.setFrameRate(FRAME_RATE);
-  FX::disableOLED(); // OLED must be disabled before cart can be used. OLED display should only be enabled prior updating the display.
-  FX::begin(FX_DATA_PAGE); // wakeup external flash chip, initialize datapage, detect presence of external flash chip
+  FX::begin(FX_DATA_PAGE); // // initialise FX chip
   
   for (uint8_t i=0; i < MAX_BALLS; i++) // initialize ball sprites
   {
@@ -172,7 +175,5 @@ void loop() {
     }
   }
       
-  FX::enableOLED();// only enable OLED for updating the display
-  arduboy.display(CLEAR_BUFFER); // Using CLEAR_BUFFER will clear the display buffer after it is displayed
-  FX::disableOLED();// disable display again so external flash can be accessed at any time
+  FX::display(CLEAR_BUFFER); // Using CLEAR_BUFFER will clear the display buffer after it is displayed
 }

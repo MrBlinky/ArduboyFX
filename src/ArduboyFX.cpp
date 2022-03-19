@@ -20,12 +20,14 @@ uint8_t FX::readByte()
 
 void FX::begin()
 {
+  disableOLED();
   wakeUp();
 }
 
 
 void FX::begin(uint16_t developmentDataPage)
 {
+  disableOLED();
   if (pgm_read_word(FX_DATA_VECTOR_KEY_POINTER) == FX_VECTOR_KEY_VALUE)
   {
     programDataPage = (pgm_read_byte(FX_DATA_VECTOR_PAGE_POINTER) << 8) | pgm_read_byte(FX_DATA_VECTOR_PAGE_POINTER + 1);
@@ -40,6 +42,7 @@ void FX::begin(uint16_t developmentDataPage)
 
 void FX::begin(uint16_t developmentDataPage, uint16_t developmentSavePage)
 {
+  disableOLED();
   if (pgm_read_word(FX_DATA_VECTOR_KEY_POINTER) == FX_VECTOR_KEY_VALUE)
   {
     programDataPage = (pgm_read_byte(FX_DATA_VECTOR_PAGE_POINTER) << 8) | pgm_read_byte(FX_DATA_VECTOR_PAGE_POINTER + 1);
@@ -85,7 +88,7 @@ void FX::noFXReboot()
       {
         if (*(uint8_t *)&timer0_millis & 0x80) bitSet(PORTB, RED_LED_BIT);
         else bitClear(PORTB, RED_LED_BIT);
-      } 
+      }
       while (bitRead(DOWN_BUTTON_PORTIN, DOWN_BUTTON_BIT)); // wait for DOWN button to enter bootloader
       Arduboy2Core::exitToBootloader();
     }
@@ -170,7 +173,7 @@ void FX::seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t 
    address += size ? index * size + offset : index * 256 + offset;
   #endif
   seekData(address);
-}   
+}
 
 
 void FX::seekSave(uint24_t address)
@@ -262,9 +265,10 @@ uint24_t FX::readPendingUInt24()
   asm volatile
   (
     "call ArduboyFX_cpp_readPendingUInt16   \n"
-    "mov  %C[val], r25                      \n"
     "mov  %B[val], r24                      \n"
     "call ArduboyFX_cpp_readPendingUInt8    \n"
+    "mov  %A[val], r24                      \n"
+    "mov  %C[val], r25                      \n"
     : [val] "=&r" (result)
     : "" (readPendingUInt16),
       "" (readPendingUInt8)
@@ -284,9 +288,10 @@ uint24_t FX::readPendingLastUInt24()
   asm volatile
   (
     "call ArduboyFX_cpp_readPendingUInt16    \n"
-    "mov  %C[val], r25                       \n"
     "mov  %B[val], r24                       \n"
     "call ArduboyFX_cpp_readPendingLastUInt8 \n"
+    "mov  %A[val], r24                       \n"
+    "mov  %C[val], r25                       \n"
     : [val] "=&r" (result)
     : "" (readPendingUInt16),
       "" (readPendingLastUInt8)
@@ -496,14 +501,15 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     "   clc                                         \n" // yshift == 1, clear carry
     "   ror     %[mode]                             \n" // carry to mode dbfExtraRow
     "                                               \n"
-    "   ldi     %[rowmask], 0x02                    \n" // rowmask = 0xFF >> (height & 7);
-    "   sbrs    %[height], 1                        \n"
+    "   ldi     %[rowmask], 0x02                    \n" // rowmask = 0xFF >> (8 - (height & 7));
+    "   sbrc    %[height], 1                        \n"
     "   ldi     %[rowmask], 0x08                    \n"
-    "   sbrs    %[height], 2                        \n"
+    "   sbrc    %[height], 2                        \n"
     "   swap    %[rowmask]                          \n"
     "   sbrs    %[height], 0                        \n"
-    "   lsl     %[rowmask]                          \n"
+    "   lsr     %[rowmask]                          \n"
     "   dec     %[rowmask]                          \n"
+    "   breq    .+4                                 \n" 
     "   cpi     %[renderheight], 8                  \n" // if (renderheight >= 8) rowmask = 0xFF;
     "   brlt    .+2                                 \n"
     "   ldi     %[rowmask], 0xFF                    \n"
@@ -514,7 +520,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     "   out     %[spdr], r1                         \n" // start next read
     "                                               \n"
     "   sbrc    %[mode], %[reverseblack]            \n" // test reverse mode
-    "   com     r0                                  \n" // reverse bitmap data
+    "   eor     r0, %[rowmask]                      \n" // reverse bitmap data
     "   mov     r24, %[rowmask]                     \n" // temporary move rowmask
     "   sbrc    %[mode], %[whiteblack]              \n" // for black and white modes:
     "   mov     r24, r0                             \n" // rowmask = bitmap
@@ -559,7 +565,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     "   st      %a[buffer], %B[bitmap]              \n"
     "5: ;render_next:                               \n"
     "   clr     r1                                  \n" // restore zero reg
-    "   subi    %A[buffer], lo8(%[displaywidth]-1)  \n" 
+    "   subi    %A[buffer], lo8(%[displaywidth]-1)  \n"
     "   sbci    %B[buffer], hi8(%[displaywidth]-1)  \n"
     "   dec     r25                                 \n"
     "   brne    2b ;render_column                   \n" // for (c < renderheigt) loop
@@ -574,7 +580,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     "   sbi     %[fxport], %[fxbit]                 \n" // disable external flash
     "   cp      r1, %[renderheight]                 \n" // while (renderheight > 0)
     "   brge    .+2                                 \n"
-    "   rjmp    1b ;render_row                      \n" 
+    "   rjmp    1b ;render_row                      \n"
    :
     [address]      "+r" (address),
     [mode]         "+r" (mode),
@@ -588,7 +594,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     [yshift]       "r" (yshift),
     [renderwidth]  "r" (renderwidth),
     [buffer]       "e" (Arduboy2Base::sBuffer + displayoffset),
-    
+
     [fxport]       "I" (_SFR_IO_ADDR(FX_PORT)),
     [fxbit]        "I" (FX_BIT),
     [cmd]          "I" (SFC_READ),
@@ -608,7 +614,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     "r24", "r25"
    );
 #else
-  uint8_t lastmask = bitShiftRightMaskUInt8(height); // mask for bottom most pixels
+  uint8_t lastmask = bitShiftRightMaskUInt8(8 - height); // mask for bottom most pixels
   do
   {
     seekData(address);
@@ -621,7 +627,7 @@ void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8
     for (uint8_t c = 0; c < renderwidth; c++)
     {
       uint8_t bitmapbyte = readUnsafe();
-      if (mode & _BV(dbfReverseBlack)) bitmapbyte ^= 0xFF;
+      if (mode & _BV(dbfReverseBlack)) bitmapbyte ^= rowmask;
       uint8_t maskbyte = rowmask;
       if (mode & _BV(dbfWhiteBlack)) maskbyte = bitmapbyte;
       if (mode & _BV(dbfBlack)) bitmapbyte = 0;
@@ -669,7 +675,7 @@ void FX::readDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t 
 }
 
 
-uint16_t FX::readIndexedUInt8(uint24_t address, uint8_t index)
+uint8_t FX::readIndexedUInt8(uint24_t address, uint8_t index)
 {
   seekDataArray(address, index, 0, sizeof(uint8_t));
   return readEnd();
@@ -694,4 +700,65 @@ uint32_t FX::readIndexedUInt32(uint24_t address, uint8_t index)
 {
   seekDataArray(address, index, 0, sizeof(uint24_t));
   return readPendingLastUInt32();
+}
+
+void FX::displayPrefetch(uint24_t address, uint8_t* target, uint16_t len, bool clear)
+{
+  seekData(address);
+  asm volatile
+  (
+    "   ldi     r30, lo8(%[sbuf])               \n" // uint8_t* ptr = Arduboy2::sBuffer;
+    "   ldi     r31, hi8(%[sbuf])               \n"
+    "   ldi     r25, hi8(%[end])                \n"
+    "   in      r0, %[spsr]                     \n" // wait(); //for 1st target data recieved (can't enable OLED mid transfer)
+    "   sbrs	r0, %[spif]                     \n"
+    "   rjmp	.-6                             \n"
+    "   cbi     %[csport], %[csbit]             \n" // enableOLED();
+    "1:                                         \n" // while (true) {
+    "   ld      r0, Z                   ;2  \   \n" // uint8_t displaydata = *ptr;
+    "   in      r24, %[spdr]            ;1  /3  \n" // uint8_t targetdata = SPDR;
+    "   out     %[spdr], r0             ;1  \   \n" // SPDR = displaydata;
+    "   cpse    %[clear], r1            ;1-2    \n" // if (clear) displaydata = 0;
+    "   mov     r0, r1                  ;1      \n"
+    "   st      Z+, r0                  ;2      \n" // *ptr++ = displaydata;
+    "   subi    %A[len], 1              ;1      \n" // if (--len >= 0) *target++ = targetdata;
+    "   sbci    %B[len], 0              ;1      \n"
+    "   brmi    3f                      ;1-2    \n" // branch ahead and back to 2 to burn 4 cycles
+    "   nop                             ;1      \n"
+    "   st      %a[target]+, r24        ;2  /11 \n"
+    "2:                                         \n"
+    "   cpi     r30, lo8(%[end])        ;1  \   \n" // if (ptr >= Arduboy2::sBuffer + WIDTH * HEIGHT / 8) break;
+    "   cpc     r31, r25                ;1      \n"
+    "   brcs    1b                      ;1-2/4  \n" // }
+    "3:                                         \n"
+    "   brmi    2b                      ;1-2    \n" // branch only when coming from above brmi
+    : [target]   "+e" (target),
+      [len]      "+d" (len)
+    : [sbuf]     ""   (Arduboy2::sBuffer),
+      [end]      ""   (Arduboy2::sBuffer + WIDTH * HEIGHT / 8),
+      [clear]    "r" (clear),
+      [spsr]     "I" (_SFR_IO_ADDR(SPSR)),
+      [spif]     "I" (SPIF),
+      [spdr]     "I" (_SFR_IO_ADDR(SPDR)),
+      [csport]   "I" (_SFR_IO_ADDR(CS_PORT)),
+      [csbit]    "I" (CS_BIT)
+    : "r24", "r25", "r30", "r31"
+  );
+  disableOLED();
+  disable();
+  SPSR;
+}
+
+void FX::display()
+{
+  enableOLED();
+  Arduboy2Base::display();
+  disableOLED();
+}
+
+void FX::display(bool clear)
+{
+  enableOLED();        
+  Arduboy2Base::display(clear);
+  disableOLED();
 }
