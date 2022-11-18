@@ -412,6 +412,15 @@ void FX::writeSavePage(uint16_t page, uint8_t* buffer)
   disable();
 }
 
+void FX::waitWhileBusy()
+{
+  enable();
+  writeByte(SFC_READSTATUS1);
+  while(readByte() & 1)
+    ; // wait while BUSY status bit is set
+  disable();
+}
+
 void FX::drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8_t mode)
 {
   // read bitmap dimensions from flash
