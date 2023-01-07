@@ -778,7 +778,7 @@ uint8_t FX::drawFrame() // ~66 bytes
   return moreFrames;
 }
 
-uint24_t FX::drawFrame(uint24_t address) //~98 bytes
+uint24_t FX::drawFrame(uint24_t address) //~94 bytes
 {
   FrameData f;
  #ifdef ARDUINO_ARCH_AVR
@@ -802,7 +802,7 @@ uint24_t FX::drawFrame(uint24_t address) //~98 bytes
     "call   %x3                 \n"
     "movw   r16, r24            \n" // frame
     "call   %x4                 \n"
-    "movw   r14, r24            \n" // mode
+    "mov    r14, r24            \n" // mode
     "movw   r24, r30            \n" // x
     "movw   r22, r26            \n" // y
     "call   %x5                 \n" // drawbitmap
@@ -814,9 +814,6 @@ uint24_t FX::drawFrame(uint24_t address) //~98 bytes
     "                           \n"
     "sbrc   r14, 6              \n" // test next frame
     "rjmp   1f                  \n" // skip end of this frame
-    "                           \n"
-    "movw   r22, %A[addr]       \n" // move addr for seekData
-    "movw   r24, %C[addr]       \n"
     "                           \n"
     "sbrs   r14, 7              \n" // test last frame
     "rjmp   0b                  \n" // loop not last frame
