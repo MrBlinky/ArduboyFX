@@ -16,3 +16,4 @@ constexpr uint16_t mapGfxHeight = 368;
 constexpr uint24_t whaleGfx = 0x0092A4;
 constexpr uint16_t whaleGfxWidth  = 107;
 constexpr uint16_t whaleGfxHeight = 69;
+
