@@ -233,6 +233,20 @@ class FX
 
     static void seekData(uint24_t address); // selects flashaddress of program data area for reading and starts the first read
 
+    /// @brief Seeks an element of an array.
+    /// @tparam Type The type of the element to be read.
+    /// @param address The base address of the array.
+    /// @param index The index of the array element.
+    template<typename Type>
+    static void seekArrayElement(uint24_t address, uint8_t index)
+    {
+      // Note: By the laws of the language this should never happen.
+      // This assert exists only as a precaution against e.g. weird compiler extensions.
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+
+      seekData(address + (index * sizeof(Type)));
+    }
+
     static void seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize);
 
     static void seekSave(uint24_t address) __attribute__ ((noinline)); // selects flashaddress of program save area for reading and starts the first read
