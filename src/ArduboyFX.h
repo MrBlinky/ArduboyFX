@@ -320,7 +320,7 @@ class FX
 
     static uint8_t readEnd() __attribute__ ((noinline)); //read the last prefetched byte from the current flash location and ends the read command
 
-    /// @brief Reads an object from the specified address.
+    /// @brief Reads an object from the specified address in the game's data section.
     /// @tparam Type The type of the object to be read.
     /// @param address The address of the object in flash memory.
     /// @param object An object into which the target object will be read.
@@ -330,7 +330,7 @@ class FX
     /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
     /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
     template<typename Type>
-    static void readObject(uint24_t address, Type & object)
+    static void readDataObject(uint24_t address, Type & object)
     {
       readDataBytes(address, reinterpret_cast<uint8_t *>(&object), sizeof(object));
     }
