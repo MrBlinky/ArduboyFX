@@ -211,6 +211,10 @@ class FX
 
     static void begin(uint16_t datapage, uint16_t savepage); // Initializes flash memory. Use when program depends on both data and save data in flash memory
 
+    /// @brief Reads the JedecID of the attached flash chip.
+    /// @param id An object into which the ID will be read.
+    static void readJedecID(JedecID & id);
+
     static void readJedecID(JedecID* id);
 
     static bool detect(); //detect presence of initialized flash memory

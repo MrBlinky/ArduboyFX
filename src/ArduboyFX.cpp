@@ -118,6 +118,16 @@ void FX::begin(uint16_t developmentDataPage, uint16_t developmentSavePage)
   wakeUp();
 }
 
+void FX::readJedecID(JedecID & id)
+{
+  enable();
+  writeByte(SFC_JEDEC_ID);
+  id.manufacturer = readByte();
+  id.device = readByte();
+  id.size = readByte();
+  disable();
+}
+
 void FX::readJedecID(JedecID* id)
 {
   enable();
