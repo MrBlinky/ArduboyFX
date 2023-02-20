@@ -247,6 +247,25 @@ class FX
       seekData(address + (index * sizeof(Type)));
     }
 
+    /// @brief Seeks a member of an object that is an element of an array.
+    /// @tparam Type The type of the elements in the array.
+    /// @param address The base address of the array.
+    /// @param index The index of the array element.
+    /// @param offset The offset of the member of the array element.
+    /// @note
+    /// It is intended that the value of `offset` be acquired using the
+    /// `offsetof` macro from `stddef.h`, as this is the safest way
+    /// to obtain the offset of an object member.
+    template<typename Type>
+    static void seekArrayElementMember(uint24_t address, uint8_t index, size_t offset)
+    {
+      // Note: By the laws of the language this should never happen.
+      // This assert exists only as a precaution against e.g. weird compiler extensions.
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+
+      seekData(address + ((index * sizeof(Type)) + offset));
+    }
+
     static void seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize);
 
     static void seekSave(uint24_t address) __attribute__ ((noinline)); // selects flashaddress of program save area for reading and starts the first read
