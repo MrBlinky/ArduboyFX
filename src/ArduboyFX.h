@@ -300,6 +300,20 @@ class FX
 
     static uint32_t readPendingLastUInt32(); //read a partly prefetched a 32-bit word from the current flash location
 
+    /// @brief Reads an object from the current flash location.
+    /// @tparam Type The type of the object to be read.
+    /// @param object An object into which the target object will be read.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void readObject(Type & object)
+    {
+      readBytes(reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
+
     static void readBytes(uint8_t* buffer, size_t length);// read a number of bytes from the current flash location
 
     static void readBytesEnd(uint8_t* buffer, size_t length); // read a number of bytes from the current flash location and ends the read command
