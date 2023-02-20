@@ -341,7 +341,7 @@ class FX
 
     static uint8_t loadGameState(uint8_t* gameState, size_t size) __attribute__ ((noinline)); //loads GameState from program exclusive 4K save data block.
 
-    static void saveGameState(uint8_t* gameState, size_t size) __attribute__ ((noinline)); // Saves GameState in RAM to programes exclusive 4K save data block.
+    static void saveGameState(const uint8_t* gameState, size_t size) __attribute__ ((noinline)); // Saves GameState in RAM to programes exclusive 4K save data block.
 
     static void eraseSaveBlock(uint16_t page); // erases 4K flash block
 

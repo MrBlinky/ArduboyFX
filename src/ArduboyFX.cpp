@@ -527,7 +527,7 @@ uint8_t FX::loadGameState(uint8_t* gameState, size_t size) // ~54 bytes
   return result;
 }
 
-void FX::saveGameState(uint8_t* gameState, size_t size) // ~152 bytes locates free space in 4K save block and saves the GamesState.
+void FX::saveGameState(const uint8_t* gameState, size_t size) // ~152 bytes locates free space in 4K save block and saves the GamesState.
 {                                                       //            if there is not enough free space, the block is erased prior to saving
  register size_t sz asm("r18") = size;
  #ifdef ARDUINO_ARCH_AVR
