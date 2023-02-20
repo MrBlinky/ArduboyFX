@@ -337,6 +337,21 @@ class FX
 
     static void readDataBytes(uint24_t address, uint8_t* buffer, size_t length);
 
+    /// @brief Reads an object from the specified address in the game's save section.
+    /// @tparam Type The type of the object to be read.
+    /// @param address The address of the object in flash memory.
+    /// @param object An object into which the target object will be read.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void readSaveObject(uint24_t address, Type & object)
+    {
+      readSaveBytes(address, reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
+
     static void readSaveBytes(uint24_t address, uint8_t* buffer, size_t length);
 
     /// @brief Loads a saved object from an exclusive 4KB save data block.
