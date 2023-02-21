@@ -211,6 +211,10 @@ class FX
 
     static void begin(uint16_t datapage, uint16_t savepage); // Initializes flash memory. Use when program depends on both data and save data in flash memory
 
+    /// @brief Reads the JedecID of the attached flash chip.
+    /// @param id An object into which the ID will be read.
+    static void readJedecID(JedecID & id);
+
     static void readJedecID(JedecID* id);
 
     static bool detect(); //detect presence of initialized flash memory
@@ -228,6 +232,39 @@ class FX
     static void seekCommand(uint8_t command, uint24_t address);// Write command and selects flash memory address. Required by any read or write command
 
     static void seekData(uint24_t address); // selects flashaddress of program data area for reading and starts the first read
+
+    /// @brief Seeks an element of an array.
+    /// @tparam Type The type of the element to be read.
+    /// @param address The base address of the array.
+    /// @param index The index of the array element.
+    template<typename Type>
+    static void seekArrayElement(uint24_t address, uint8_t index)
+    {
+      // Note: By the laws of the language this should never happen.
+      // This assert exists only as a precaution against e.g. weird compiler extensions.
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+
+      seekData(address + (index * sizeof(Type)));
+    }
+
+    /// @brief Seeks a member of an object that is an element of an array.
+    /// @tparam Type The type of the elements in the array.
+    /// @param address The base address of the array.
+    /// @param index The index of the array element.
+    /// @param offset The offset of the member of the array element.
+    /// @note
+    /// It is intended that the value of `offset` be acquired using the
+    /// `offsetof` macro from `stddef.h`, as this is the safest way
+    /// to obtain the offset of an object member.
+    template<typename Type>
+    static void seekArrayElementMember(uint24_t address, uint8_t index, size_t offset)
+    {
+      // Note: By the laws of the language this should never happen.
+      // This assert exists only as a precaution against e.g. weird compiler extensions.
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+
+      seekData(address + ((index * sizeof(Type)) + offset));
+    }
 
     static void seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize);
 
@@ -263,19 +300,91 @@ class FX
 
     static uint32_t readPendingLastUInt32(); //read a partly prefetched a 32-bit word from the current flash location
 
+    /// @brief Reads an object from the current flash location.
+    /// @tparam Type The type of the object to be read.
+    /// @param object An object into which the target object will be read.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void readObject(Type & object)
+    {
+      readBytes(reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
+
     static void readBytes(uint8_t* buffer, size_t length);// read a number of bytes from the current flash location
 
     static void readBytesEnd(uint8_t* buffer, size_t length); // read a number of bytes from the current flash location and ends the read command
 
     static uint8_t readEnd() __attribute__ ((noinline)); //read the last prefetched byte from the current flash location and ends the read command
 
+    /// @brief Reads an object from the specified address in the game's data section.
+    /// @tparam Type The type of the object to be read.
+    /// @param address The address of the object in flash memory.
+    /// @param object An object into which the target object will be read.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void readDataObject(uint24_t address, Type & object)
+    {
+      readDataBytes(address, reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
+
     static void readDataBytes(uint24_t address, uint8_t* buffer, size_t length);
+
+    /// @brief Reads an object from the specified address in the game's save section.
+    /// @tparam Type The type of the object to be read.
+    /// @param address The address of the object in flash memory.
+    /// @param object An object into which the target object will be read.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void readSaveObject(uint24_t address, Type & object)
+    {
+      readSaveBytes(address, reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
 
     static void readSaveBytes(uint24_t address, uint8_t* buffer, size_t length);
 
+    /// @brief Loads a saved game state object from an exclusive 4KB save data block.
+    /// @tparam Type The type of the object to be loaded.
+    /// @param object The object into which the saved state will be loaded.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void loadGameState(Type & object)
+    {
+      loadGameState(reinterpret_cast<uint8_t *>(&object), sizeof(object));
+    }
+
     static uint8_t loadGameState(uint8_t* gameState, size_t size) __attribute__ ((noinline)); //loads GameState from program exclusive 4K save data block.
 
-    static void saveGameState(uint8_t* gameState, size_t size) __attribute__ ((noinline)); // Saves GameState in RAM to programes exclusive 4K save data block.
+    /// @brief Saves a game state object into an exclusive 4KB save data block.
+    /// @tparam Type The type of the object to be saved.
+    /// @param object The object to be saved.
+    /// @warning
+    /// `Type` should be:
+    /// * _[trivially copyable](https://en.cppreference.com/w/cpp/named_req/TriviallyCopyable)_
+    /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
+    /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
+    template<typename Type>
+    static void saveGameState(const Type & object)
+    {
+      saveGameState(reinterpret_cast<const uint8_t *>(&object), sizeof(object));
+    }
+
+    static void saveGameState(const uint8_t* gameState, size_t size) __attribute__ ((noinline)); // Saves GameState in RAM to programes exclusive 4K save data block.
 
     static void eraseSaveBlock(uint16_t page); // erases 4K flash block
 
