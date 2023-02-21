@@ -354,7 +354,7 @@ class FX
 
     static void readSaveBytes(uint24_t address, uint8_t* buffer, size_t length);
 
-    /// @brief Loads a saved object from an exclusive 4KB save data block.
+    /// @brief Loads a saved game state object from an exclusive 4KB save data block.
     /// @tparam Type The type of the object to be loaded.
     /// @param object The object into which the saved state will be loaded.
     /// @warning
@@ -363,7 +363,7 @@ class FX
     /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
     /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
     template<typename Type>
-    static void loadObject(Type & object)
+    static void loadGameState(Type & object)
     {
       loadGameState(reinterpret_cast<uint8_t *>(&object), sizeof(object));
     }
