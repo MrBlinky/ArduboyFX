@@ -242,7 +242,7 @@ class FX
     {
       // Note: By the laws of the language this should never happen.
       // This assert exists only as a precaution against e.g. weird compiler extensions.
-      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.");
 
       seekData(address + (index * sizeof(Type)));
     }
@@ -261,7 +261,7 @@ class FX
     {
       // Note: By the laws of the language this should never happen.
       // This assert exists only as a precaution against e.g. weird compiler extensions.
-      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.")
+      static_assert(sizeof(Type) > 0, "Cannot use a Type with a size of 0.");
 
       seekData(address + ((index * sizeof(Type)) + offset));
     }
