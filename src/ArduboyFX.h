@@ -1,7 +1,14 @@
 #ifndef ARDUBOYFX_H
 #define ARDUBOYFX_H
 
-#include <Arduboy2.h>
+// For uint8_t, uint16_t
+#include <stdint.h>
+
+// For size_t
+#include <stddef.h>
+
+// For ARDUINO_ARCH_AVR, PORTD, ...
+#include <Arduino.h>
 
 #ifdef CART_CS_RX
   #define FX_PORT PORTD

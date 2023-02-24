@@ -1,6 +1,9 @@
 #include "ArduboyFX.h"
 #include <wiring.c>
 
+// For Arduboy2Base::sBuffer, WIDTH, HEIGHT
+#include <Arduboy2.h>
+
 uint16_t FX::programDataPage; // program read only data location in flash memory
 uint16_t FX::programSavePage; // program read and write data location in flash memory
 Font     FX::font;
