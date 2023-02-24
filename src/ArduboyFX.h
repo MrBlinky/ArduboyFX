@@ -164,41 +164,48 @@ struct FrameData
 class FX
 {
   public:
-    static inline void enableOLED() __attribute__((always_inline)) // selects OLED display.
+    [[gnu::always_inline]]
+    static inline void enableOLED() // selects OLED display.
     {
       CS_PORT &= ~(1 << CS_BIT);
     };
 
-    static inline void disableOLED() __attribute__((always_inline)) // deselects OLED display.
+    [[gnu::always_inline]]
+    static inline void disableOLED() // deselects OLED display.
     {
       CS_PORT |=  (1 << CS_BIT);
     };
 
-    static inline void enable() __attribute__((always_inline)) // selects external flash memory and allows new commands
+    [[gnu::always_inline]]
+    static inline void enable() // selects external flash memory and allows new commands
     {
       FX_PORT  &= ~(1 << FX_BIT);
     };
 
-    static inline void disable() __attribute__((always_inline)) // deselects external flash memory and ends the last command
+    [[gnu::always_inline]]
+    static inline void disable() // deselects external flash memory and ends the last command
     {
       FX_PORT  |=  (1 << FX_BIT);
     };
 
-    static inline void wait() __attribute__((always_inline)) // wait for a pending flash transfer to complete
+    [[gnu::always_inline]]
+    static inline void wait() // wait for a pending flash transfer to complete
     {
       while ((SPSR & _BV(SPIF)) == 0);
     }
 
     static uint8_t writeByte(uint8_t data); // write a single byte to flash memory.
 
-    static inline void writeByteBeforeWait(uint8_t data) __attribute__((always_inline))
+    [[gnu::always_inline]]
+    static inline void writeByteBeforeWait(uint8_t data)
     {
       SPDR = data;
       asm volatile("nop\n");
       wait();
     }
 
-    static inline void writeByteAfterWait(uint8_t data) __attribute__((always_inline))
+    [[gnu::always_inline]]
+    static inline void writeByteAfterWait(uint8_t data)
     {
       wait();
       SPDR = data;
@@ -275,29 +282,36 @@ class FX
 
     static void seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize);
 
-    static void seekSave(uint24_t address) __attribute__ ((noinline)); // selects flashaddress of program save area for reading and starts the first read
+    [[gnu::noinline]]
+    static void seekSave(uint24_t address); // selects flashaddress of program save area for reading and starts the first read
 
-    static inline uint8_t readUnsafe() __attribute__((always_inline)) // read flash data without performing any checks and starts the next read.
+    [[gnu::always_inline]]
+    static inline uint8_t readUnsafe() // read flash data without performing any checks and starts the next read.
     {
       uint8_t result = SPDR;
       SPDR = 0;
       return result;
     };
 
-    static inline uint8_t readUnsafeEnd() __attribute__((always_inline))
+    [[gnu::always_inline]]
+    static inline uint8_t readUnsafeEnd()
     {
       uint8_t result = SPDR;
       disable();
       return result;
     };
 
-    static uint8_t readPendingUInt8() __attribute__ ((noinline));    //read a prefetched byte from the current flash location
+    [[gnu::noinline]]
+    static uint8_t readPendingUInt8();    //read a prefetched byte from the current flash location
 
-    static uint8_t readPendingLastUInt8() __attribute__ ((noinline));    //depreciated use readEnd() instead (see below)
+    [[gnu::noinline]]
+    static uint8_t readPendingLastUInt8();    //depreciated use readEnd() instead (see below)
 
-    static uint16_t readPendingUInt16() __attribute__ ((noinline)) __attribute__ ((naked)); //read a partly prefetched 16-bit word from the current flash location
+    [[gnu::noinline, gnu::naked]]
+    static uint16_t readPendingUInt16(); //read a partly prefetched 16-bit word from the current flash location
 
-    static uint16_t readPendingLastUInt16() __attribute__ ((noinline)) __attribute__ ((naked)); //read a partly prefetched 16-bit word from the current flash location
+    [[gnu::noinline, gnu::naked]]
+    static uint16_t readPendingLastUInt16(); //read a partly prefetched 16-bit word from the current flash location
 
     static uint24_t readPendingUInt24() ; //read a partly prefetched 24-bit word from the current flash location
 
@@ -325,7 +339,8 @@ class FX
 
     static void readBytesEnd(uint8_t* buffer, size_t length); // read a number of bytes from the current flash location and ends the read command
 
-    static uint8_t readEnd() __attribute__ ((noinline)); //read the last prefetched byte from the current flash location and ends the read command
+    [[gnu::noinline]]
+    static uint8_t readEnd(); //read the last prefetched byte from the current flash location and ends the read command
 
     /// @brief Reads an object from the specified address in the game's data section.
     /// @tparam Type The type of the object to be read.
@@ -375,7 +390,8 @@ class FX
       loadGameState(reinterpret_cast<uint8_t *>(&object), sizeof(object));
     }
 
-    static uint8_t loadGameState(uint8_t* gameState, size_t size) __attribute__ ((noinline)); //loads GameState from program exclusive 4K save data block.
+    [[gnu::noinline]]
+    static uint8_t loadGameState(uint8_t* gameState, size_t size); //loads GameState from program exclusive 4K save data block.
 
     /// @brief Saves a game state object into an exclusive 4KB save data block.
     /// @tparam Type The type of the object to be saved.
@@ -391,7 +407,8 @@ class FX
       saveGameState(reinterpret_cast<const uint8_t *>(&object), sizeof(object));
     }
 
-    static void saveGameState(const uint8_t* gameState, size_t size) __attribute__ ((noinline)); // Saves GameState in RAM to programes exclusive 4K save data block.
+    [[gnu::noinline]]
+    static void saveGameState(const uint8_t* gameState, size_t size); // Saves GameState in RAM to programes exclusive 4K save data block.
 
     static void eraseSaveBlock(uint16_t page); // erases 4K flash block
 
@@ -399,13 +416,15 @@ class FX
 
     static void waitWhileBusy(); // wait for outstanding erase or write to finish
 
-    static void drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8_t mode) __attribute__((noinline));
+    [[gnu::noinline]]
+    static void drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8_t mode);
 
     static void setFrame(uint24_t frame, uint8_t repeat)__attribute__ ((noinline));
 
     static uint8_t drawFrame();
 
-    static uint24_t drawFrame(uint24_t address) __attribute__((noinline)); // draw a list of bitmap images located at address
+    [[gnu::noinline]]
+    static uint24_t drawFrame(uint24_t address); // draw a list of bitmap images located at address
 
     static void readDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize, uint8_t* buffer, size_t length);
 
@@ -466,7 +485,8 @@ class FX
 
     /* general optimized functions */
 
-    static inline uint16_t multiplyUInt8 (uint8_t a, uint8_t b) __attribute__((always_inline))
+    [[gnu::always_inline]]
+    static inline uint16_t multiplyUInt8 (uint8_t a, uint8_t b)
     {
      #ifdef ARDUINO_ARCH_AVR
       uint16_t result;
@@ -485,7 +505,8 @@ class FX
      #endif
     }
 
-    static inline uint8_t bitShiftLeftUInt8(uint8_t bit) __attribute__((always_inline)) //fast (1 << (bit & 7))
+    [[gnu::always_inline]]
+    static inline uint8_t bitShiftLeftUInt8(uint8_t bit) //fast (1 << (bit & 7))
     {
      #ifdef ARDUINO_ARCH_AVR
       uint8_t result;
@@ -507,7 +528,8 @@ class FX
      #endif
     }
 
-    static inline uint8_t bitShiftRightUInt8(uint8_t bit) __attribute__((always_inline)) //fast (0x80 >> (bit & 7))
+    [[gnu::always_inline]]
+    static inline uint8_t bitShiftRightUInt8(uint8_t bit) //fast (0x80 >> (bit & 7))
     {
      #ifdef ARDUINO_ARCH_AVR
       uint8_t result;
@@ -529,7 +551,8 @@ class FX
      #endif
     }
 
-    static inline uint8_t bitShiftLeftMaskUInt8(uint8_t bit) __attribute__((always_inline)) //fast (0xFF << (bit & 7) & 0xFF)
+    [[gnu::always_inline]]
+    static inline uint8_t bitShiftLeftMaskUInt8(uint8_t bit) //fast (0xFF << (bit & 7) & 0xFF)
     {
      #ifdef ARDUINO_ARCH_AVR
       uint8_t result;
@@ -552,7 +575,8 @@ class FX
      #endif
     }
 
-    static inline uint8_t bitShiftRightMaskUInt8(uint8_t bit) __attribute__((always_inline)) //fast (0xFF >> (bit & 7))
+    [[gnu::always_inline]]
+    static inline uint8_t bitShiftRightMaskUInt8(uint8_t bit) //fast (0xFF >> (bit & 7))
     {
      #ifdef ARDUINO_ARCH_AVR
       uint8_t result;
