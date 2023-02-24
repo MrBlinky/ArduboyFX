@@ -49,15 +49,15 @@ constexpr uint8_t dbfEndFrame     = 6; // last bitmap image of a frame
 constexpr uint8_t dbfLastFrame    = 7; // last bitmap image of the last frame
 
 // drawBitmap modes with same behaviour as Arduboy library drawBitmap modes
-constexpr uint8_t dbmBlack   = _BV(dbfReverseBlack) |   // white pixels in bitmap will be drawn as black pixels on display
-                               _BV(dbfBlack) |          // black pixels in bitmap will not change pixels on display
-                               _BV(dbfWhiteBlack);      // (same as sprites drawErase)
+constexpr uint8_t dbmBlack   = (1 << dbfReverseBlack) |   // white pixels in bitmap will be drawn as black pixels on display
+                               (1 << dbfBlack) |          // black pixels in bitmap will not change pixels on display
+                               (1 << dbfWhiteBlack);      // (same as sprites drawErase)
 
-constexpr uint8_t dbmWhite   = _BV(dbfWhiteBlack);      // white pixels in bitmap will be drawn as white pixels on display
+constexpr uint8_t dbmWhite   = (1 << dbfWhiteBlack);      // white pixels in bitmap will be drawn as white pixels on display
                                                         // black pixels in bitmap will not change pixels on display
                                                         //(same as sprites drawSelfMasked)
 
-constexpr uint8_t dbmInvert  = _BV(dbfInvert);          // when a pixel in bitmap has a different color than on display the
+constexpr uint8_t dbmInvert  = (1 << dbfInvert);          // when a pixel in bitmap has a different color than on display the
                                                         // pixel on display will be drawn as white. In all other cases the
                                                         // pixel will be drawn as black
 // additional drawBitmap modes
@@ -65,14 +65,14 @@ constexpr uint8_t dbmNormal     = 0;                    // White pixels in bitma
 constexpr uint8_t dbmOverwrite  = 0;                    // Black pixels in bitmap will be drawn as black pixels on display
                                                         // (Same as sprites drawOverwrite)
 
-constexpr uint8_t dbmReverse = _BV(dbfReverseBlack);    // White pixels in bitmap will be drawn as black pixels on display
+constexpr uint8_t dbmReverse = (1 << dbfReverseBlack);    // White pixels in bitmap will be drawn as black pixels on display
                                                         // Black pixels in bitmap will be drawn as white pixels on display
 
-constexpr uint8_t dbmMasked  = _BV(dbfMasked);          // The bitmap contains a mask that will determine which pixels are
+constexpr uint8_t dbmMasked  = (1 << dbfMasked);          // The bitmap contains a mask that will determine which pixels are
                                                         // drawn and which pixels remain unchanged on display
                                                         // (same as sprites drawPlusMask)
-constexpr uint8_t dbmEndFrame = _BV(dbfEndFrame);       // last bitmap of a frame but more frames
-constexpr uint8_t dbmLastFrame = _BV(dbfLastFrame);     // last bitmap of a frame and at end of frames
+constexpr uint8_t dbmEndFrame = (1 << dbfEndFrame);       // last bitmap of a frame but more frames
+constexpr uint8_t dbmLastFrame = (1 << dbfLastFrame);     // last bitmap of a frame and at end of frames
 
 // Note above modes may be combined like (dbmMasked | dbmReverse)
 
@@ -85,15 +85,15 @@ constexpr uint8_t dcfMasked       = 4; // character contains mask data
 constexpr uint8_t dcfProportional = 5; // use fonts width table to mimic proportional characters
 
 //draw Font character modes
-constexpr uint8_t dcmBlack   = _BV(dcfReverseBlack) |   // white pixels in character will be drawn as black pixels on display
-                               _BV(dcfBlack) |          // black pixels in character will not change pixels on display
-                               _BV(dcfWhiteBlack);      // (same as sprites drawErase)
+constexpr uint8_t dcmBlack   = (1 << dcfReverseBlack) |   // white pixels in character will be drawn as black pixels on display
+                               (1 << dcfBlack) |          // black pixels in character will not change pixels on display
+                               (1 << dcfWhiteBlack);      // (same as sprites drawErase)
 
-constexpr uint8_t dcmWhite   = _BV(dcfWhiteBlack);      // white pixels in character will be drawn as white pixels on display
+constexpr uint8_t dcmWhite   = (1 << dcfWhiteBlack);      // white pixels in character will be drawn as white pixels on display
                                                         // black pixels in character will not change pixels on display
                                                         //(same as sprites drawSelfMasked)
 
-constexpr uint8_t dcmInvert  = _BV(dcfInvert);          // when a pixel in character has a different color than on display the
+constexpr uint8_t dcmInvert  = (1 << dcfInvert);          // when a pixel in character has a different color than on display the
                                                         // pixel on display will be drawn as white. In all other cases the
                                                         // pixel will be drawn as black
 // additional drawcharacter modes
@@ -101,12 +101,12 @@ constexpr uint8_t dcmNormal     = 0;                    // White pixels in chara
 constexpr uint8_t dcmOverwrite  = 0;                    // Black pixels in character will be drawn as black pixels on display
                                                         // (Same as sprites drawOverwrite)
 
-constexpr uint8_t dcmReverse = _BV(dcfReverseBlack);    // White pixels in character will be drawn as black pixels on display
+constexpr uint8_t dcmReverse = (1 << dcfReverseBlack);    // White pixels in character will be drawn as black pixels on display
                                                         // Black pixels in character will be drawn as white pixels on display
 
-constexpr uint8_t dcmMasked  = _BV(dcfMasked);          // The character contains a mask that will determine which pixels are
+constexpr uint8_t dcmMasked  = (1 << dcfMasked);          // The character contains a mask that will determine which pixels are
 
-constexpr uint8_t dcmProportional = _BV(dcfProportional); // draw characters with variable spacing. When this mode is used a
+constexpr uint8_t dcmProportional = (1 << dcfProportional); // draw characters with variable spacing. When this mode is used a
                                                           // 256 byte width table must precede the font data
 
 // Note above modes may be combined like (dcmMasked | dcmProportional)
@@ -191,7 +191,7 @@ class FX
     [[gnu::always_inline]]
     static inline void wait() // wait for a pending flash transfer to complete
     {
-      while ((SPSR & _BV(SPIF)) == 0);
+      while ((SPSR & (1 << SPIF)) == 0);
     }
 
     static uint8_t writeByte(uint8_t data); // write a single byte to flash memory.
