@@ -10,6 +10,9 @@
 // For ARDUINO_ARCH_AVR, PORTD, ...
 #include <Arduino.h>
 
+// For Arduboy2Base::sBuffer, WIDTH, HEIGHT, CS_PORT ...
+#include <Arduboy2.h>
+
 #ifdef CART_CS_RX
   #define FX_PORT PORTD
   #define FX_BIT PORTD2
@@ -243,9 +246,14 @@ class FX
 
     static void writeEnable();// Puts flash memory in write mode, required prior to any write command
 
+    [[gnu::noinline, gnu::naked]]
     static void seekCommand(uint8_t command, uint24_t address);// Write command and selects flash memory address. Required by any read or write command
 
-    static void seekData(uint24_t address); // selects flashaddress of program data area for reading and starts the first read
+    /// @brief selects flash address of program data for reading and starts the first read
+    /// @param address The base address of program data memory.
+
+    [[gnu::noinline]]
+    static void seekData(uint24_t address);
 
     /// @brief Seeks an element of an array.
     /// @tparam Type The type of the element to be read.
@@ -280,6 +288,7 @@ class FX
       seekData(address + ((index * sizeof(Type)) + offset));
     }
 
+    [[gnu::noinline, gnu::naked]]
     static void seekDataArray(uint24_t address, uint8_t index, uint8_t offset, uint8_t elementSize);
 
     [[gnu::noinline]]
@@ -304,8 +313,11 @@ class FX
     [[gnu::noinline]]
     static uint8_t readPendingUInt8();    //read a prefetched byte from the current flash location
 
+    /// @brief read the last prefetched byte from the current flash location and ends the read command.
+    /// This function performs the same action as readEnd()
+
     [[gnu::noinline]]
-    static uint8_t readPendingLastUInt8();    //depreciated use readEnd() instead (see below)
+    static uint8_t readPendingLastUInt8();
 
     [[gnu::noinline, gnu::naked]]
     static uint16_t readPendingUInt16(); //read a partly prefetched 16-bit word from the current flash location
@@ -339,8 +351,10 @@ class FX
 
     static void readBytesEnd(uint8_t* buffer, size_t length); // read a number of bytes from the current flash location and ends the read command
 
+    /// @brief read the last prefetched byte from the current flash location and ends the read command
+
     [[gnu::noinline]]
-    static uint8_t readEnd(); //read the last prefetched byte from the current flash location and ends the read command
+    static uint8_t readEnd();
 
     /// @brief Reads an object from the specified address in the game's data section.
     /// @tparam Type The type of the object to be read.
@@ -385,9 +399,9 @@ class FX
     /// * a _[standard-layout](https://en.cppreference.com/w/cpp/language/data_members#Standard-layout)_ type
     /// Attempting to read an object that does not meet these restrictions will result in _undefined behaviour_.
     template<typename Type>
-    static void loadGameState(Type & object)
+    static uint8_t loadGameState(Type & object)
     {
-      loadGameState(reinterpret_cast<uint8_t *>(&object), sizeof(object));
+      return loadGameState((uint8_t*)(&object), sizeof(object));
     }
 
     [[gnu::noinline]]
@@ -419,7 +433,8 @@ class FX
     [[gnu::noinline]]
     static void drawBitmap(int16_t x, int16_t y, uint24_t address, uint8_t frame, uint8_t mode);
 
-    static void setFrame(uint24_t frame, uint8_t repeat)__attribute__ ((noinline));
+    [[gnu::noinline]]
+    static void setFrame(uint24_t frame, uint8_t repeat);
 
     static uint8_t drawFrame();
 
@@ -598,6 +613,46 @@ class FX
       return 0xFF >> (bit & 7);
      #endif
     }
+
+    [[gnu::always_inline]]
+    static inline int16_t fastDiv8(int16_t i)
+    {
+     #ifdef ARDUINO_ARCH_AVR
+      asm volatile(
+        "asr  %B[i] \n"
+        "ror  %A[i] \n"
+        "asr  %B[i] \n"
+        "ror  %A[i] \n"
+        "asr  %B[i] \n"
+        "ror  %A[i] \n"
+      : [i] "+r" (i)
+      :     "0" (i)
+      );
+      return i;
+     #else
+      return i >> 3;
+     #endif
+    };
+
+    [[gnu::always_inline]]
+    static inline uint16_t fastDiv8(uint16_t i)
+    {
+     #ifdef ARDUINO_ARCH_AVR
+      asm volatile(
+        "lsr  %B[i] \n"
+        "ror  %A[i] \n"
+        "lsr  %B[i] \n"
+        "ror  %A[i] \n"
+        "lsr  %B[i] \n"
+        "ror  %A[i] \n"
+      : [i] "+r" (i)
+      :     "0"  (i)
+      );
+      return i;
+     #else
+      return i >> 3;
+     #endif
+    };
 
     static uint16_t programDataPage; // program read only data area in flash memory
     static uint16_t programSavePage; // program read and write data area in flash memory
